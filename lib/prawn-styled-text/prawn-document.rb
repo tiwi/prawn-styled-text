@@ -1,7 +1,7 @@
 require 'prawn'
 
 Prawn::Document.class_eval do
-  def styled_text( data )
+  def styled_text( data, opts = {} )
     parts = []
     text_options = {}
     extra_options = { margin_left: 0 }
@@ -69,6 +69,10 @@ Prawn::Document.class_eval do
           image_options[:width]  = options[:width]  if options[:width]
           image_options[:height] = options[:height] if options[:height]
           self.image context[:src], image_options
+        elsif context[:tag] == :p
+          if opts[:margin_bottom]
+            self.move_down opts[:margin_bottom]
+          end
         end
       end
     end
