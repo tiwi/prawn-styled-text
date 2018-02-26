@@ -107,7 +107,7 @@ module PrawnStyledText
       when :li # list item
         context[:options][:'margin-left'] = @@margin_ul
         context[:pre] = @@symbol_ul.force_encoding( 'windows-1252' ).encode( 'UTF-8' )
-      when :mark
+      when :mark, :span
         @@highlight ||= HighlightCallback.new( pdf )
         @@highlight.set_color nil
         context[:options][:callback] = @@highlight
@@ -129,7 +129,7 @@ module PrawnStyledText
       attributes = part[:node].get 'style'
       if attributes
         values = adjust_values( pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ) )
-        @@highlight.set_color( values[:background] ) if tag == :mark && values[:background]
+        @@highlight.set_color( values[:background] ) if values[:background]
         context[:options].merge! values
       end
       font_size = context[:options][:size] if font_size
