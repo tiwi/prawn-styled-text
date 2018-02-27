@@ -108,7 +108,7 @@ module PrawnStyledText
         context[:options][:'margin-left'] = @@margin_ul
         context[:pre] = @@symbol_ul.force_encoding( 'windows-1252' ).encode( 'UTF-8' )
       when :mark, :span
-        @@highlight ||= HighlightCallback.new( pdf )
+        @@highlight = HighlightCallback.new( pdf )
         @@highlight.set_color nil
         context[:options][:callback] = @@highlight
       when :small
