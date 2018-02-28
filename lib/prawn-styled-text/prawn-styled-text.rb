@@ -4,7 +4,7 @@ require_relative 'prawn-document'
 
 module PrawnStyledText
   BLOCK_TAGS = [ :br, :div, :h1, :h2, :h3, :h4, :h5, :h6, :hr, :li, :p, :ul ]
-  DEF_BG_MARK = 'ffff00'
+  DEF_BG_MARK = 'ffffff'
   DEF_HEADING_T = 16
   DEF_HEADING_H = 8
   DEF_MARGIN_UL = 15
@@ -32,7 +32,7 @@ module PrawnStyledText
           i = v.to_i
           v.include?( '%' ) ? ( i * pdf.bounds.height * 0.01 ) : i
         when :size
-          v.to_i
+          parse_size( pdf, v )
         when :styles
           v.split( ',' ).map { |s| s.strip.to_sym }
         when :width
@@ -160,6 +160,14 @@ module PrawnStyledText
       numbers.map { |n| n.to_i.to_s(16).rjust(2, '0') }.join
     else
       value.delete( '#' )
+    end
+  end
+
+  def self.parse_size( pdf, value )
+    if value.include? 'em'
+      (pdf.font_size * value.to_f).to_i
+    else
+      value.to_i
     end
   end
 end
