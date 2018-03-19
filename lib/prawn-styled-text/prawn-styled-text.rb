@@ -3,11 +3,11 @@ require_relative 'callbacks'
 require_relative 'prawn-document'
 
 module PrawnStyledText
-	class AdjustFontSizeError < StandardError
-		def message
-			"Adjust font size method has to respond to calls method"
-		end
-	end
+  class AdjustFontSizeError < StandardError
+    def message
+      "Adjust font size method has to respond to calls method"
+    end
+  end
 
   BLOCK_TAGS = [ :br, :div, :h1, :h2, :h3, :h4, :h5, :h6, :hr, :li, :p, :ul ]
   DEF_BG_MARK = 'ffffff'
@@ -76,11 +76,11 @@ module PrawnStyledText
     # Evalutate attributes
     attributes = data[:node].get 'style'
 
-		if attributes
-			context[:options].merge!(
-				adjust_values(pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ), adjust_font_size)
-			)
-		end
+    if attributes
+      context[:options].merge!(
+        adjust_values(pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ), adjust_font_size)
+      )
+    end
 
     if data[:name] == :ul
       @@margin_ul += ( context[:options][:'margin-left'] ? context[:options][:'margin-left'].to_i : DEF_MARGIN_UL )
@@ -176,15 +176,15 @@ module PrawnStyledText
   end
 
   def self.parse_size(pdf, value, adjust_font_size = nil)
-		size = 
-			if value.include? 'em'
-			  (pdf.font_size * value.to_f).to_i
-			else
-			  value.to_i
-			end
+    size =
+      if value.include? 'em'
+        (pdf.font_size * value.to_f).to_i
+      else
+        value.to_i
+      end
 
-		return size unless adjust_font_size
+    return size unless adjust_font_size
 
-		adjust_font_size.call(size)
+    adjust_font_size.call(size)
   end
 end

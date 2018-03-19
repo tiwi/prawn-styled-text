@@ -7,8 +7,8 @@ Prawn::Document.class_eval do
     extra_options = { margin_left: 0 }
     oga = Oga.parse_html data
 
-		adjust_font_size = opts[:adjust_font_size]
-		raise PrawnStyledText::AdjustFontSizeError if adjust_font_size && !adjust_font_size.respond_to?(:call)
+    adjust_font_size = opts[:adjust_font_size]
+    raise PrawnStyledText::AdjustFontSizeError if adjust_font_size && !adjust_font_size.respond_to?(:call)
 
     PrawnStyledText::traverse oga.children do |type, text, data|
       context = if type == :text_node
