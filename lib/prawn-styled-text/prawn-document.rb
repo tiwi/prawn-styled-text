@@ -6,13 +6,17 @@ Prawn::Document.class_eval do
     text_options = {}
     extra_options = { margin_left: 0 }
     oga = Oga.parse_html data
+
+    adjust_font_size = opts[:adjust_font_size]
+    raise PrawnStyledText::AdjustFontSizeError if adjust_font_size && !adjust_font_size.respond_to?(:call)
+
     PrawnStyledText::traverse oga.children do |type, text, data|
       context = if type == :text_node
-          PrawnStyledText::text_node( self, data )
+          PrawnStyledText::text_node( self, data, adjust_font_size )
         elsif type == :opening_tag
-          PrawnStyledText::opening_tag( self, data )
+          PrawnStyledText::opening_tag( self, data, adjust_font_size )
         else
-          PrawnStyledText::closing_tag( self, data )
+          PrawnStyledText::closing_tag( self, data, adjust_font_size )
         end
       if context[:flush] && parts.any? # flush current parts
         parts[0][:text] = parts[0][:text].lstrip

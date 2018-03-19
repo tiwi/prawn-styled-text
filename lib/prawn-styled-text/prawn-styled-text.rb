@@ -3,6 +3,12 @@ require_relative 'callbacks'
 require_relative 'prawn-document'
 
 module PrawnStyledText
+  class AdjustFontSizeError < StandardError
+    def message
+      "Adjust font size method has to respond to calls method"
+    end
+  end
+
   BLOCK_TAGS = [ :br, :div, :h1, :h2, :h3, :h4, :h5, :h6, :hr, :li, :p, :ul ]
   DEF_BG_MARK = 'ffffff'
   DEF_HEADING_T = 16
@@ -15,7 +21,7 @@ module PrawnStyledText
   @@margin_ul = 0
   @@symbol_ul = ''
 
-  def self.adjust_values( pdf, values )
+  def self.adjust_values(pdf, values, adjust_font_size)
     ret = {}
     values.each do |k, v|
       key = k.to_sym
@@ -32,7 +38,7 @@ module PrawnStyledText
           i = v.to_i
           v.include?( '%' ) ? ( i * pdf.bounds.height * 0.01 ) : i
         when :size
-          parse_size( pdf, v )
+          parse_size(pdf, v, adjust_font_size)
         when :styles
           v.split( ',' ).map { |s| s.strip.to_sym }
         when :width
@@ -45,7 +51,7 @@ module PrawnStyledText
     ret
   end
 
-  def self.closing_tag( pdf, data )
+  def self.closing_tag(pdf, data, adjust_font_size)
     context = { tag: data[:name], options: {} }
     context[:flush] ||= true if BLOCK_TAGS.include? data[:name]
     # Evalutate tag
@@ -60,16 +66,22 @@ module PrawnStyledText
     end
     # Evalutate attributes
     attributes = data[:node].get 'style'
-    context[:options] = adjust_values( pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ) ) if attributes
+    context[:options] = adjust_values( pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ), adjust_font_size ) if attributes
     context
   end
 
-  def self.opening_tag( pdf, data )
+  def self.opening_tag(pdf, data, adjust_font_size)
     context = { tag: data[:name], options: {} }
     context[:flush] ||= true if BLOCK_TAGS.include? data[:name]
     # Evalutate attributes
     attributes = data[:node].get 'style'
-    context[:options].merge!( adjust_values( pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ) ) ) if attributes
+
+    if attributes
+      context[:options].merge!(
+        adjust_values(pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ), adjust_font_size)
+      )
+    end
+
     if data[:name] == :ul
       @@margin_ul += ( context[:options][:'margin-left'] ? context[:options][:'margin-left'].to_i : DEF_MARGIN_UL )
       @@symbol_ul = if context[:options][:'list-symbol']
@@ -82,7 +94,7 @@ module PrawnStyledText
     context
   end
 
-  def self.text_node( pdf, data )
+  def self.text_node(pdf, data, adjust_font_size)
     context = { pre: '', options: {} }
     styles = []
     font_size = pdf.font_size
@@ -121,14 +133,14 @@ module PrawnStyledText
           color: part[:node]['color'],
           size: part[:node]['size']
         }.delete_if { |k, v| v.nil? }
-        values = adjust_values( pdf, attributes )
+        values = adjust_values(pdf, attributes, adjust_font_size)
         context[:options].merge! values
       end
       context[:options][:styles] = styles if styles.any?
       # Evalutate attributes
       attributes = part[:node].get 'style'
       if attributes
-        values = adjust_values( pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ) )
+        values = adjust_values(pdf, attributes.scan( /\s*([^:]+):\s*([^;]+)[;]*/ ), adjust_font_size)
         @@highlight.set_color( values[:background] ) if values[:background]
         context[:options].merge! values
       end
@@ -163,11 +175,16 @@ module PrawnStyledText
     end
   end
 
-  def self.parse_size( pdf, value )
-    if value.include? 'em'
-      (pdf.font_size * value.to_f).to_i
-    else
-      value.to_i
-    end
+  def self.parse_size(pdf, value, adjust_font_size = nil)
+    size =
+      if value.include? 'em'
+        (pdf.font_size * value.to_f).to_i
+      else
+        value.to_i
+      end
+
+    return size unless adjust_font_size
+
+    adjust_font_size.call(size)
   end
 end
