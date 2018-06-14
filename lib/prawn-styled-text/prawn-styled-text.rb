@@ -9,7 +9,7 @@ module PrawnStyledText
     end
   end
 
-  BLOCK_TAGS = [ :br, :div, :h1, :h2, :h3, :h4, :h5, :h6, :hr, :li, :p, :ul ]
+  BLOCK_TAGS = [ :br, :div, :h1, :h2, :h3, :h4, :h5, :h6, :hr, :li, :p, :ul, :ol ]
   DEF_BG_MARK = 'ffffff'
   DEF_HEADING_T = 16
   DEF_HEADING_H = 8
@@ -63,6 +63,9 @@ module PrawnStyledText
       context[:src] = data[:node].get 'src'
     when :ul
       @@margin_ul = 0
+    when :ol
+      @@margin_ul = 0
+      @@current_index = nil
     end
     # Evalutate attributes
     attributes = data[:node].get 'style'
@@ -82,14 +85,20 @@ module PrawnStyledText
       )
     end
 
-    if data[:name] == :ul
+    tag_name = data[:name]
+    if [:ul, :ol].include?(tag_name)
       @@margin_ul += ( context[:options][:'margin-left'] ? context[:options][:'margin-left'].to_i : DEF_MARGIN_UL )
-      @@symbol_ul = if context[:options][:'list-symbol']
-          matches = context[:options][:'list-symbol'].match /'([^']*)'|"([^"]*)"|(.*)/
-          matches[3] || matches[2] || matches[1] || ''
-        else
-          DEF_SYMBOL_UL
-        end
+
+      if tag_name == :ul
+        @@symbol_ul = if context[:options][:'list-symbol']
+            matches = context[:options][:'list-symbol'].match /'([^']*)'|"([^"]*)"|(.*)/
+            matches[3] || matches[2] || matches[1] || ''
+          else
+            DEF_SYMBOL_UL
+          end
+      else
+        @@current_index = 1
+      end
     end
     context
   end
@@ -118,7 +127,12 @@ module PrawnStyledText
         styles.push :italic
       when :li # list item
         context[:options][:'margin-left'] = @@margin_ul
-        context[:pre] = @@symbol_ul.force_encoding( 'windows-1252' ).encode( 'UTF-8' )
+        if defined?(@@current_index) && @@current_index
+          context[:pre] = "#{@@current_index}. "
+          @@current_index += 1
+        else
+          context[:pre] = @@symbol_ul.force_encoding( 'windows-1252' ).encode( 'UTF-8' )
+        end
       when :mark, :span
         @@highlight = HighlightCallback.new( pdf )
         @@highlight.set_color nil
