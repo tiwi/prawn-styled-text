@@ -37,7 +37,7 @@ Prawn::Document.class_eval do
       end
       options = context[:options]
       if type == :text_node
-        text_options[:align] = options[:'text-align'].to_sym if options[:'text-align']
+        text_options[:align] = serialize_text_align(options[:'text-align']) if options[:'text-align']
         margin_top = options.delete( :'margin-top' ).to_i
         self.move_down( margin_top ) if margin_top > 0
         margin_left = options.delete( :'margin-left' ).to_i
@@ -81,5 +81,18 @@ Prawn::Document.class_eval do
       end
     end
     self.formatted_text parts, text_options
+  end
+
+  private
+
+  def serialize_text_align(align)
+    case align
+    when 'start'
+      :left
+    when 'end'
+      :right
+    else
+      align.to_sym
+    end
   end
 end
