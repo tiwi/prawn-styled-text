@@ -26,9 +26,12 @@ Prawn::Document.class_eval do
           parts.pop if parts[-1][:text].empty?
         end
         if parts.any?
-          parts[0][:text] = extra_options[:pre] + parts[0][:text] if extra_options[:pre]
           self.indent( extra_options[:margin_left] ) do
-            self.formatted_text parts, text_options
+            if (pre = extra_options[:pre])
+              formatted_text_with_pre(parts, pre, text_options)
+            else
+              self.formatted_text parts, text_options
+            end
           end
         end
         parts = []
@@ -84,6 +87,16 @@ Prawn::Document.class_eval do
   end
 
   private
+
+  def formatted_text_with_pre(parts, pre, text_options)
+    self.float do
+      self.formatted_text([parts.first.merge(text: pre)], text_options)
+    end
+
+    self.indent(self.width_of(pre)) do
+      self.formatted_text(parts, text_options)
+    end
+  end
 
   def serialize_text_align(align)
     case align
